@@ -1,0 +1,49 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Jangan jalankan dua deploy bersamaan; deploy terbaru menunggu yang sebelumnya selesai
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    name: Deploy ke server production
+
+    steps:
+      - name: Pull & update aplikasi via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.APP_PATH }}"
+
+            echo "==> Ambil kode terbaru dari main"
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            git log --oneline -1
+
+            echo "==> Install dependency PHP"
+            composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+            echo "==> Jalankan migration"
+            php artisan migrate --force
+
+            echo "==> Bersihkan & bangun ulang cache"
+            php artisan optimize:clear
+            php artisan optimize

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('tasks', 'order')) {
+            return;
+        }
+
         Schema::table('tasks', function (Blueprint $table) {
             $table->integer('order')->nullable()->after('status');
         });
@@ -18,8 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->dropColumn('order');
-        });
+        // The `order` column is owned by the create_tasks_table migration,
+        // so rolling this back must not drop it.
     }
 };

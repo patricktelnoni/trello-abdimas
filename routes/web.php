@@ -57,10 +57,7 @@ Route::middleware([CheckJwtToken::class])->group(function () {
     // Route::get('/project/{id}', [ProjectController::class, 'showDetail'])->name('projects.showDetail');
     // Route::post('/project/invite', [ProjectController::class, 'invite'])->name('project.invite');
     // Route::post('/check-email', [ProjectController::class, 'checkEmail'])->name('check.email');
-    Route::get("/api/projects/{id}/users", [
-        CollaboratorController::class,
-        "getProjectUsers",
-    ]);
     // Route::post('/api/check-email', [CollaboratorController::class, 'checkEmail']);
-    Route::get("/api/projects", [ProjectController::class, "getAllProjects"]);
+    // Jangan definisikan route /api/* di sini: route web didaftarkan sebelum
+    // routes/api.php sehingga akan menimpa endpoint API (mis. GET /api/projects).
 });

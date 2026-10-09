@@ -16,13 +16,14 @@ class TaskSeeder extends Seeder
     public function run()
     {
         $faker = Faker::create();
+        $projectIds = DB::table('projects')->pluck('idproject');
 
         // menambah data ke tabel tasks
         for ($i = 0; $i < 10; $i++) {
             DB::table('tasks')->insert([
                 'nama_task' => $faker->sentence(3),
                 'status' => $faker->randomElement([1, 2, 3]),  // status 1, 2, 3
-                'idproject' => $faker->numberBetween(1, 5),
+                'idproject' => $projectIds->random(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

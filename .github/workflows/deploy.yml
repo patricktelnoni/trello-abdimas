@@ -32,11 +32,25 @@ jobs:
             set -e
             cd "${{ secrets.APP_PATH }}"
 
+            # .env server tidak boleh tersentuh git: simpan dulu, kembalikan setelah update
+            ENV_BACKUP="$HOME/.env.trelloapp.backup"
+            if [ -f .env ]; then
+              cp .env "$ENV_BACKUP"
+            fi
+
             echo "==> Ambil kode terbaru dari main"
             git fetch origin main
             git checkout main
             git reset --hard origin/main
             git log --oneline -1
+
+            if [ -f "$ENV_BACKUP" ]; then
+              cp "$ENV_BACKUP" .env
+            fi
+            if [ ! -f .env ]; then
+              echo "ERROR: .env tidak ditemukan di server" >&2
+              exit 1
+            fi
 
             echo "==> Install dependency PHP"
             composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader

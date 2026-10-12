@@ -208,6 +208,75 @@ class ProjectController extends Controller
         return redirect()->back()->with('success', 'User berhasil diundang.');
     }
 
+    /**
+     * Invite a user to a project via REST API (POST /api/project/{project}/invite).
+     */
+    public function apiInvite(Request $request, $projectId)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $project = Project::find($projectId);
+
+        if (! $project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project tidak ditemukan.',
+            ], 404);
+        }
+
+        // Hanya pemilik project yang boleh mengundang
+        if ($project->iduser != auth()->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya pemilik project yang dapat mengundang kolaborator.',
+            ], 403);
+        }
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User dengan email tersebut tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($user->id == $project->iduser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak bisa mengundang diri sendiri.',
+            ], 409);
+        }
+
+        $alreadyExists = Collaborator::where('project_id', $project->idproject)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User sudah menjadi kolaborator project ini.',
+            ], 409);
+        }
+
+        Collaborator::create([
+            'project_id' => $project->idproject,
+            'user_id'    => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User berhasil diundang sebagai kolaborator.',
+            'data'    => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ],
+        ], 201);
+    }
+
     public function checkEmail(Request $request)
     {
         $email = $request->input('email');

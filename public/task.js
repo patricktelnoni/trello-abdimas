@@ -924,9 +924,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 .addClass("bg-gray-300 cursor-not-allowed");
         }
     });
+
+    // Kirim undangan lewat REST API (butuh token JWT, jadi tidak bisa submit form biasa)
+    $("#invite-form").on("submit", function (e) {
+        e.preventDefault();
+
+        const status = $("#email-status");
+        const inviteButton = $("#invite-button");
+
+        inviteButton.prop("disabled", true);
+
+        $.ajax({
+            url: `${API_BASE_URL}/project/${projectId}/invite`,
+            method: "POST",
+            headers: { ...headers, Accept: "application/json" },
+            data: JSON.stringify({ email: $("#email-input").val() }),
+            success: function (response) {
+                status.text(response.message).css("color", "green");
+                $("#email-input").val("");
+                // Muat ulang agar daftar anggota ikut diperbarui
+                setTimeout(() => window.location.reload(), 800);
+            },
+            error: function (xhr) {
+                const message =
+                    (xhr.responseJSON && xhr.responseJSON.message) ||
+                    "Gagal mengundang user";
+                status.text(message).css("color", "red");
+                inviteButton.prop("disabled", false);
+            },
+        });
+    });
 });
 
-fetch(`${API_BASE_URL}/projects/${projectId}/users`, {
+fetch(`${API_BASE_URL}/project/${projectId}/users`, {
     // ← koma di sini, bukan di luar
     method: "GET",
     headers: {

@@ -114,7 +114,7 @@
             <h2 class="text-2xl font-semibold mb-6">Bagikan Board</h2>
 
             <!-- Invite Section -->
-            <form id="invite-form" action="{{ route('project.invite') }}" method="POST" autocomplete="off">
+            <form id="invite-form" method="POST" autocomplete="off">
                 @csrf
 
                 <input type="hidden" name="project_id" id="projectId">

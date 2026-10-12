@@ -1,4 +1,4 @@
-0.  <?php
+<?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CollaboratorController;
 
 Route::group(['middleware' => 'auth:api'], function () {
     Route::apiResource('projects', ProjectController::class);
@@ -13,10 +14,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::apiResource('users', UserController::class);
 
     Route::post('/project/{project}/invite', [ProjectController::class, 'apiInvite'])->name('api.project.invite');
-    Route::get('/project/{project}/users', [ProjectController::class, 'getProjectUsers'])->name('projects.users');
+    Route::get('/project/{project}/users', [CollaboratorController::class, 'getProjectUsers'])->name('projects.users');
     Route::delete('/project/{project}/remove/{user}', [ProjectController::class, 'removeUser']);
 
-    Route::post('/project/invite', [ProjectController::class, 'invite'])->name('project.invite');
     Route::post('/check-email', [ProjectController::class, 'checkEmail'])->name('check.email');
 });
 

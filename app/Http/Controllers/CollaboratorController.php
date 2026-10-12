@@ -20,7 +20,16 @@ class CollaboratorController extends Controller
         try {
             // Cari project dengan owner
             $project = Project::with('owner')->findOrFail($projectId);
-            
+
+            // Hanya pemilik atau kolaborator yang boleh melihat anggota project
+            $userId = auth()->user()->id;
+            $isMember = $project->iduser == $userId
+                || Collaborator::where('project_id', $projectId)->where('user_id', $userId)->exists();
+
+            if (! $isMember) {
+                return response()->json(['message' => 'Anda tidak memiliki akses ke project ini'], 403);
+            }
+
             // Ambil semua collaborators termasuk data user-nya
             $collaborators = Collaborator::with('user')
                 ->where('project_id', $projectId)

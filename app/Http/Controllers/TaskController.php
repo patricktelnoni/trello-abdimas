@@ -28,6 +28,14 @@ class TaskController extends Controller
             ->exists();
     }
 
+    // Aplikasi mobile mengirim "due_date"; simpan ke kolom "tenggat"
+    private function mapDueDateToTenggat(Request $request)
+    {
+        if ($request->has("due_date") && !$request->has("tenggat")) {
+            $request->merge(["tenggat" => $request->input("due_date")]);
+        }
+    }
+
     public function index(Request $request)
     {
         if ($request->boolean("unassigned")) {
@@ -87,10 +95,13 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
+        $this->mapDueDateToTenggat($request);
+
         $validated = $request->validate([
             "status" => "sometimes|required|in:1,2,3",
             "nama_task" => "required|string|max:255",
             "deskripsi" => "sometimes|nullable|string",
+            "tenggat" => "sometimes|nullable|date",
             "order" => "sometimes|integer",
             "gdrive_link" => "sometimes|nullable|string|url",
             "idproject" => "nullable|exists:projects,idproject",
@@ -129,13 +140,13 @@ class TaskController extends Controller
             $task->project->update(["updated_at" => now()]);
         }
 
-        // return response()->json(
-        //     [
-        //         "message" => "Task created successfully",
-        //         "task" => $task,
-        //     ],
-        //     201,
-        // );
+        return response()->json(
+            [
+                "message" => "Task created successfully",
+                "task" => $task,
+            ],
+            201,
+        );
     }
 
     /**
@@ -143,7 +154,12 @@ class TaskController extends Controller
      */
     public function show($id)
     {
-        $task = Task::with("project")->find($id);
+        $task = Task::with([
+            "project",
+            "comments" => function ($query) {
+                $query->with("user:id,name")->orderBy("created_at");
+            },
+        ])->find($id);
 
         if (!$task) {
             return response()->json(["message" => "Task not found"], 404);
@@ -172,10 +188,13 @@ class TaskController extends Controller
                 ], 403);
             }
 
+            $this->mapDueDateToTenggat($request);
+
             $validated = $request->validate([
                 "status" => "sometimes|required|in:1,2,3",
                 "nama_task" => "sometimes|required|string|max:255",
                 "deskripsi" => "sometimes|nullable|string",
+                "tenggat" => "sometimes|nullable|date",
                 "order" => "sometimes|integer",
                 "gdrive_link" => "sometimes|nullable|string|url",
                 "idproject" => "sometimes|nullable|exists:projects,idproject",

@@ -11,7 +11,19 @@ class Task extends Model
 
     protected $table = 'tasks'; // Nama tabel
     protected $primaryKey = 'idtask'; // Primary key
-    protected $fillable = ['nama_task', 'status', 'order', 'idproject', 'gdrive_link', 'user_id']; // Kolom yang bisa diisi secara massal
+    protected $fillable = ['nama_task', 'deskripsi', 'tenggat', 'status', 'order', 'idproject', 'gdrive_link', 'user_id']; // Kolom yang bisa diisi secara massal
+
+    protected $casts = [
+        'tenggat' => 'datetime',
+    ];
+
+    // Aplikasi mobile membaca tenggat sebagai "due_date"
+    protected $appends = ['due_date'];
+
+    public function getDueDateAttribute()
+    {
+        return $this->tenggat?->toJSON();
+    }
 
     /**
      * Relasi dengan model Project
@@ -29,5 +41,14 @@ class Task extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    /**
+     * Relasi dengan model Comment
+     * Satu task bisa memiliki banyak komentar (termasuk balasan).
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'idtask', 'idtask');
     }
 }
